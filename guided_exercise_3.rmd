@@ -97,7 +97,6 @@ movie_train<-read_rds("movie_train.Rds")%>%
   mutate(metascore=ifelse(metascore=="N/A",NA,metascore))%>%
   mutate(across(.cols  =c(boxoffice_a,metascore), as.numeric))%>%
   filter(!is.na(boxoffice_a))
-
 movie_test<-read_rds("movie_test.Rds")%>%
   mutate(metascore=ifelse(metascore=="N/A",NA,metascore))%>%
   mutate(across(.cols=c(metascore),as.numeric))
@@ -113,9 +112,7 @@ genre_table <- movie_train %>%
   count() %>%
   arrange(by=-n) # Arrange from least to most common
 glimpse(genre_table)
-
 total_genres <- colSums(genre_table[,-1])
-
 genre_table_above_threshold <- genre_table %>%
   filter(n/total_genres >= 0.005 & genre1 != "N/A")
 genre_list <- genre_table_above_threshold[1] # Generate list (1 col) of genre types
@@ -137,9 +134,7 @@ director_table <- movie_train %>%
   count() %>%
   arrange(by=-n) # Arrange from least to most common
 glimpse(director_table)
-
 total_directors <- colSums(director_table[,-1])
-
 director_table_above_threshold <- director_table %>%
   filter(n/total_directors >= 0.002 & director1 != "N/A")
 director_list <- director_table_above_threshold[1] # Generate list (1 col) of director types
@@ -162,9 +157,7 @@ writer_table <- movie_train %>%
   count() %>%
   arrange(by=-n) # Arrange from least to most common
 glimpse(writer_table)
-
 total_writers <- colSums(writer_table[,-1])
-
 writer_table_above_threshold <- writer_table %>%
   filter(n/total_writers >= 0.002 & writer1 != "N/A")
 writer_list <- writer_table_above_threshold[1] # Generate list (1 col) of writer types
@@ -187,9 +180,7 @@ actor_table <- movie_train %>%
   count() %>%
   arrange(by=-n) # Arrange from least to most common
 glimpse(actor_table)
-
 total_actors <- colSums(actor_table[,-1])
-
 actor_table_above_threshold <- actor_table %>%
   filter(n/total_actors >= 0.002 & actor1 != "N/A")
 actor_list <- actor_table_above_threshold[1] # Generate list (1 col) of actor types
@@ -212,9 +203,7 @@ language_table <- movie_train %>%
   count() %>%
   arrange(by=-n) # Arrange from least to most common
 glimpse(language_table)
-
 total_languages <- colSums(language_table[,-1])
-
 language_table_above_threshold <- language_table %>%
   filter(n/total_languages >= 0.005 & language1 != "N/A")
 language_list <- language_table_above_threshold[1] # Generate list (1 col) of language types
@@ -237,9 +226,7 @@ country_table <- movie_train %>%
   count() %>%
   arrange(by=-n) # Arrange from least to most common
 glimpse(country_table)
-
 total_countrys <- colSums(country_table[,-1])
-
 country_table_above_threshold <- country_table %>%
   filter(n/total_countrys >= 0.005 & country1 != "N/A")
 country_list <- country_table_above_threshold[1] # Generate list (1 col) of country types
@@ -262,9 +249,7 @@ production_table <- movie_train %>%
   count() %>%
   arrange(by=-n) # Arrange from least to most common
 glimpse(production_table)
-
 total_productions <- colSums(production_table[,-1])
-
 production_table_above_threshold <- production_table %>%
   filter(n/total_productions >= 0.005 & production1 != "N/A")
 production_list <- production_table_above_threshold[1] # Generate list (1 col) of production types
@@ -294,18 +279,172 @@ movie_train <- movie_train %>%
 ```
 
 
-
 ## Lastly, we will repeat the above data processing for the testing data set
 ### Combine 3 Genre Columns and Create Binary Var Columns for each Genre Type
-  ##### TODO
+
+```{r}
+genre_table <- movie_test %>% 
+  group_by(genre1) %>% # Group by types of genres seen in data set
+  count() %>%
+  arrange(by=-n) # Arrange from least to most common
+glimpse(genre_table)
+total_genres <- colSums(genre_table[,-1])
+genre_table_above_threshold <- genre_table %>%
+  filter(n/total_genres >= 0.005 & genre1 != "N/A")
+genre_list <- genre_table_above_threshold[1] # Generate list (1 col) of genre types
+```
+
+```{r}
+for (i in 1:nrow(genre_list)) { # Iterate through our genre list
+  genre <- as.character(genre_list[i,]) # Save current genre as chr type
+  movie_test <- movie_test %>% # Create new column with name equal to the current genre and check to see if any of the three genre columns are that kind. If they are we will set this value to 1. Otherwise we will set it to 0.
+  mutate({{genre}} := if_else(((!is.na(genre1) & genre1== {{genre}}) | (!is.na(genre2) & genre2== {{genre}}) | (!is.na(genre3) & genre3== {{genre}})), 1, 0))
+}
+```
+
+### Combine 3 Director Columns and Create Binary Var Columns for each Director
+
+```{r}
+director_table <- movie_test %>% 
+  group_by(director1) %>% # Group by types of directors seen in data set
+  count() %>%
+  arrange(by=-n) # Arrange from least to most common
+glimpse(director_table)
+total_directors <- colSums(director_table[,-1])
+director_table_above_threshold <- director_table %>%
+  filter(n/total_directors >= 0.002 & director1 != "N/A")
+director_list <- director_table_above_threshold[1] # Generate list (1 col) of director types
+```
+
+```{r}
+for (i in 1:nrow(director_list)) { # Iterate through our director list
+  director <- as.character(director_list[i,]) # Save current director as chr type
+  str <- str_replace_all({{director}}, "[^a-zA-Z]", "") # Filter for only letter
+  movie_test <- movie_test %>% # Create new column with name equal to the current director and check to see if any of the three director columns are that kind. If they are we will set this value to 1. Otherwise we will set it to 0.
+  mutate({{str}} := if_else(((!is.na(director1) & director1== {{director}}) | (!is.na(director2) & director2== {{director}}) | (!is.na(director3) & director3== {{director}})), 1, 0))
+}
+```
+
+### Combine 3 Writer Columns and Create Binary Var Columns for each Writer
+
+```{r}
+writer_table <- movie_test %>% 
+  group_by(writer1) %>% # Group by types of writers seen in data set
+  count() %>%
+  arrange(by=-n) # Arrange from least to most common
+glimpse(writer_table)
+total_writers <- colSums(writer_table[,-1])
+writer_table_above_threshold <- writer_table %>%
+  filter(n/total_writers >= 0.002 & writer1 != "N/A")
+writer_list <- writer_table_above_threshold[1] # Generate list (1 col) of writer types
+```
+
+```{r}
+for (i in 1:nrow(writer_list)) { # Iterate through our writer list
+  writer <- as.character(writer_list[i,]) # Save current writer as chr type
+  str <- str_replace_all({{writer}}, "[^a-zA-Z]", "") # Filter to only letters
+  movie_test <- movie_test %>% # Create new column with name equal to the current writer and check to see if any of the three writer columns are that kind. If they are we will set this value to 1. Otherwise we will set it to 0.
+  mutate({{str}} := if_else(((!is.na(writer1) & writer1== {{writer}}) | (!is.na(writer2) & writer2== {{writer}}) | (!is.na(writer3) & writer3== {{writer}})), 1, 0))
+}
+```
+
+### Combine 3 Actor Columns and Create Binary Var Columns for each Actor
+
+```{r}
+actor_table <- movie_test %>% 
+  group_by(actor1) %>% # Group by types of actors seen in data set
+  count() %>%
+  arrange(by=-n) # Arrange from least to most common
+glimpse(actor_table)
+total_actors <- colSums(actor_table[,-1])
+actor_table_above_threshold <- actor_table %>%
+  filter(n/total_actors >= 0.002 & actor1 != "N/A")
+actor_list <- actor_table_above_threshold[1] # Generate list (1 col) of actor types
+```
+
+```{r}
+for (i in 1:nrow(actor_list)) { # Iterate through our actor list
+  actor <- as.character(actor_list[i,]) # Save current actor as chr type
+  str <- str_replace_all({{actor}}, "[^a-zA-Z]", "") # Filter to only letters
+  movie_test <- movie_test %>% # Create new column with name equal to the current actor and check to see if any of the three actor columns are that kind. If they are we will set this value to 1. Otherwise we will set it to 0.
+  mutate({{str}} := if_else(((!is.na(actor1) & actor1== {{actor}}) | (!is.na(actor2) & actor2== {{actor}}) | (!is.na(actor3) & actor3== {{actor}})), 1, 0))
+}
+```
+
+### Combine 3 Language Columns and Create Binary Var Columns for each Language Type
+
+```{r}
+language_table <- movie_test %>% 
+  group_by(language1) %>% # Group by types of languages seen in data set
+  count() %>%
+  arrange(by=-n) # Arrange from least to most common
+glimpse(language_table)
+total_languages <- colSums(language_table[,-1])
+language_table_above_threshold <- language_table %>%
+  filter(n/total_languages >= 0.005 & language1 != "N/A")
+language_list <- language_table_above_threshold[1] # Generate list (1 col) of language types
+```
+
+```{r}
+for (i in 1:nrow(language_list)) { # Iterate through our language list
+  language <- as.character(language_list[i,]) # Save current language as chr type
+  str <- str_replace_all({{language}}, "[^a-zA-Z]", "") # Filter to only letters
+  movie_test <- movie_test %>% # Create new column with name equal to the current language and check to see if any of the three language columns are that kind. If they are we will set this value to 1. Otherwise we will set it to 0.
+  mutate({{language}} := if_else(((!is.na(language1) & language1== {{language}}) | (!is.na(language2) & language2== {{language}}) | (!is.na(language3) & language3== {{language}})), 1, 0))
+}
+```
+
+### Combine 3 Country Columns and Create Binary Var Columns for each Country Type
+
+```{r}
+country_table <- movie_test %>% 
+  group_by(country1) %>% # Group by types of countrys seen in data set
+  count() %>%
+  arrange(by=-n) # Arrange from least to most common
+glimpse(country_table)
+total_countrys <- colSums(country_table[,-1])
+country_table_above_threshold <- country_table %>%
+  filter(n/total_countrys >= 0.005 & country1 != "N/A")
+country_list <- country_table_above_threshold[1] # Generate list (1 col) of country types
+```
+
+```{r}
+for (i in 1:nrow(country_list)) { # Iterate through our country list
+  country <- as.character(country_list[i,]) # Save current country as chr type
+  str <- str_replace_all({{country}}, "[^a-zA-Z]", "") # Filter to only letters
+  movie_test <- movie_test %>% # Create new column with name equal to the current country and check to see if any of the three country columns are that kind. If they are we will set this value to 1. Otherwise we will set it to 0.
+  mutate({{str}} := if_else(((!is.na(country1) & country1== {{country}}) | (!is.na(country2) & country2== {{country}}) | (!is.na(country3) & country3== {{country}})), 1, 0))
+}
+```
+
+### Combine 3 Production Columns and Create Binary Var Columns for each Production Type
+
+```{r}
+production_table <- movie_test %>% 
+  group_by(production1) %>% # Group by types of productions seen in data set
+  count() %>%
+  arrange(by=-n) # Arrange from least to most common
+glimpse(production_table)
+total_productions <- colSums(production_table[,-1])
+production_table_above_threshold <- production_table %>%
+  filter(n/total_productions >= 0.005 & production1 != "N/A")
+production_list <- production_table_above_threshold[1] # Generate list (1 col) of production types
+```
+
+```{r}
+for (i in 1:nrow(production_list)) { # Iterate through our production list
+  production <- as.character(production_list[i,]) # Save current production as chr type
+  str <- str_replace_all({{production}}, "[^a-zA-Z]", "") # Filter to only letters
+  movie_test <- movie_test %>% # Create new column with name equal to the current production and check to see if any of the three production columns are that kind. If they are we will set this value to 1. Otherwise we will set it to 0.
+  mutate({{str}} := if_else(((!is.na(production1) & production1== {{production}}) | (!is.na(production2) & production2== {{production}}) | (!is.na(production3) & production3== {{production}})), 1, 0))
+}
+```
 
 # Lasso Analysis
 
 ```{r}
 penalty_spec<-.03
-
 mixture_spec<-1
-
 lasso_fit<- 
   linear_reg(penalty=penalty_spec,
              mixture=mixture_spec) %>% 
@@ -363,7 +502,14 @@ movie_train<-movie_fit%>%
   predict(movie_train)%>% # Create test data predictions
   rename(.pred1=.pred)%>%
   bind_cols(movie_train) # Add predictions to the existing testing dataset
-
 movie_train%>%
   yardstick::rmse(truth=log_boxoffice_a, estimate=.pred1) # Calculate RMSE for training data
+```
+
+## movie_test
+```{r}
+movie_test<-movie_fit%>%
+  predict(movie_test)%>% # Create test data predictions
+  rename(.pred1=.pred)%>%
+  bind_cols(movie_test) # Add predictions to the existing testing dataset
 ```
