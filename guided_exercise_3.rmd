@@ -96,7 +96,8 @@ movie_train<-read_rds("movie_train.Rds")%>%
   mutate(boxoffice_a=ifelse(boxoffice_a=="N/A",NA,boxoffice_a))%>%
   mutate(metascore=ifelse(metascore=="N/A",NA,metascore))%>%
   mutate(across(.cols  =c(boxoffice_a,metascore), as.numeric))%>%
-  filter(!is.na(boxoffice_a))
+  filter(!is.na(boxoffice_a)) %>%
+  filter(!is.na(metascore))
 
 movie_test<-read_rds("movie_test.Rds")%>%
   mutate(metascore=ifelse(metascore=="N/A",NA,metascore))%>%
@@ -290,7 +291,7 @@ Now, we have completed the creation of binary categories for each of the above t
 
 ```{r}
 movie_train <- movie_train %>%
-  select(-genre1, -genre2, -genre3, -director1, -director2, -director3, -actor1, -actor2, -actor3, -writer1, -writer2, -writer3, -language1, -language2, -language3, -country1, -country2, -country3, -production1, -production2, -production3, -boxoffice_a, -plot, -runtime, -awards, -metascore, -released, -imdbid)
+  select(-genre1, -genre2, -genre3, -director1, -director2, -director3, -actor1, -actor2, -actor3, -writer1, -writer2, -writer3, -language1, -language2, -language3, -country1, -country2, -country3, -production1, -production2, -production3, -boxoffice_a, -plot, -runtime, -awards, -released, -imdbid)
 ```
 
 
